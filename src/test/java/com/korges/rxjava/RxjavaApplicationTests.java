@@ -118,9 +118,21 @@ public class RxjavaApplicationTests {
         TimeUnit.SECONDS.sleep(3); //Need this otherwise the main client closes before observers are finished
     }
 
+    /**
+     * Join two observables with static zip operator
+     */
     @Test
-    public void rsJava_9() {
+    public void rxJava_9() {
+        Observable<Integer> numbers = Observable
+                .range(1, 10)
+                .map(x -> x * 10);
+        Observable<String> chars = Observable
+                .just("A", "B", "C")
+                .repeat(4);
 
+        Observable<String> zip = Observable.zip(chars, numbers, (c, n) -> c + n);
+
+        zip.subscribe(this::print);
     }
 
     void print(Object obj) {
