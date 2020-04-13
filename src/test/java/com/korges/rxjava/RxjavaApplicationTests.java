@@ -1,9 +1,12 @@
 package com.korges.rxjava;
 
 
+import com.korges.rxjava.dao.Person;
+import com.korges.rxjava.dao.PersonDao;
 import com.korges.rxjava.weather.Weather;
 import com.korges.rxjava.weather.WeatherClient;
 import io.reactivex.Observable;
+import io.reactivex.schedulers.Schedulers;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -91,6 +94,33 @@ public class RxjavaApplicationTests {
         Observable<Weather> weather = cracow.mergeWith(warsaw);
 
         weather.subscribe(this::print);
+    }
+
+    private final PersonDao dao = new PersonDao();
+
+    /**
+     * Run two observables on separated threads
+     */
+    @Test
+    public void rxJava_8() throws InterruptedException {
+        final Observable<Weather> łódź = client
+                .rxFetch("Łódź")
+                .subscribeOn(Schedulers.io()); // Don't use .io() !
+        final Observable<Person> person = dao
+                .rxFindById(42)
+                .subscribeOn(Schedulers.io());
+        System.out.println("BEFORE ZIP");
+
+        Observable<String> zipped = łódź.zipWith(person, (Weather w, Person p) -> w + " <> " + p);
+
+        zipped.subscribe(this::print);
+
+        TimeUnit.SECONDS.sleep(3); //Need this otherwise the main client closes before observers are finished
+    }
+
+    @Test
+    public void rsJava_9() {
+
     }
 
     void print(Object obj) {
