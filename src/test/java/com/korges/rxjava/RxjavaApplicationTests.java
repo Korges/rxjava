@@ -80,6 +80,19 @@ public class RxjavaApplicationTests {
                 .subscribe(this::print);
     }
 
+    /**
+     * Merged two observables
+     */
+    @Test
+    public void rxJava_7() {
+        final Observable<Weather> cracow = client.rxFetch("Cracow");
+        final Observable<Weather> warsaw = client.rxFetch("Warsaw");
+
+        Observable<Weather> weather = cracow.mergeWith(warsaw);
+
+        weather.subscribe(this::print);
+    }
+
     void print(Object obj) {
         logger.info("Got: {}", obj);
     }
