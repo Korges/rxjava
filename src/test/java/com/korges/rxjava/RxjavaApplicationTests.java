@@ -1,10 +1,12 @@
 package com.korges.rxjava;
 
 
+import com.korges.rxjava.cache.CacheServer;
 import com.korges.rxjava.dao.Person;
 import com.korges.rxjava.dao.PersonDao;
 import com.korges.rxjava.weather.Weather;
 import com.korges.rxjava.weather.WeatherClient;
+import io.reactivex.Maybe;
 import io.reactivex.Observable;
 import io.reactivex.schedulers.Schedulers;
 import org.junit.Test;
@@ -133,6 +135,26 @@ public class RxjavaApplicationTests {
         Observable<String> zip = Observable.zip(chars, numbers, (c, n) -> c + n);
 
         zip.subscribe(this::print);
+    }
+
+    /**
+     * Use .firstElement() operator to call first element and close rest of streams
+     */
+    @Test
+    public void rxJava_10() throws InterruptedException {
+        CacheServer eu = new CacheServer();
+        CacheServer us = new CacheServer();
+
+        Observable<String> resultEu = eu.rxFindBy(42, 1500);
+        Observable<String> resultUs = us.rxFindBy(44, 1200);
+
+        Maybe<String> result = Observable
+                .merge(resultEu.timeout(3000, TimeUnit.MILLISECONDS), resultUs.timeout(3000, TimeUnit.MILLISECONDS))
+                .firstElement();
+
+        result.subscribe(this::print);
+
+        TimeUnit.SECONDS.sleep(5); //Need this otherwise the main client closes before observers are finished
     }
 
     void print(Object obj) {
