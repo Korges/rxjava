@@ -8,11 +8,15 @@ import com.korges.rxjava.weather.Weather;
 import com.korges.rxjava.weather.WeatherClient;
 import io.reactivex.Maybe;
 import io.reactivex.Observable;
+import io.reactivex.Single;
 import io.reactivex.schedulers.Schedulers;
+import io.reactivex.subjects.Subject;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -155,6 +159,32 @@ public class RxjavaApplicationTests {
         result.subscribe(this::print);
 
         TimeUnit.SECONDS.sleep(5); //Need this otherwise the main client closes before observers are finished
+    }
+
+    File file = new File("/Users/korges/IdeaProjects");
+
+    /**
+     * Scan given directory every 3 seconds and print its content
+     */
+    @Test
+    public void rxJava_11() {
+        Observable
+                .interval(3, TimeUnit.SECONDS)
+                .map(x -> listChildrenOf(file))
+                .blockingSubscribe(this::print);
+    }
+
+    private List<String> listChildrenOf(File dir) {
+        return childrenOf(dir)
+                .toList()
+                .blockingGet();
+    }
+
+    private Observable<String> childrenOf(File dir) {
+        final File[] files = dir.listFiles();
+        return Observable
+                .fromArray(files)
+                .map(File::getName);
     }
 
     void print(Object obj) {
