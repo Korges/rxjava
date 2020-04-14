@@ -161,7 +161,7 @@ public class RxjavaApplicationTests {
         TimeUnit.SECONDS.sleep(5); //Need this otherwise the main client closes before observers are finished
     }
 
-    File file = new File("/Users/korges/IdeaProjects");
+    File dir = new File("/Users/korges/IdeaProjects");
 
     /**
      * Scan given directory every 3 seconds and print its content
@@ -170,7 +170,7 @@ public class RxjavaApplicationTests {
     public void rxJava_11() {
         Observable
                 .interval(3, TimeUnit.SECONDS)
-                .map(x -> listChildrenOf(file))
+                .map(x -> listChildrenOf(dir))
                 .blockingSubscribe(this::print);
     }
 
@@ -185,6 +185,14 @@ public class RxjavaApplicationTests {
         return Observable
                 .fromArray(files)
                 .map(File::getName);
+    }
+
+    @Test
+    public void rxJava_12() {
+        Observable
+                .interval(2, TimeUnit.SECONDS)
+                .flatMap(x -> childrenOf(dir))
+                .blockingSubscribe(this::print);
     }
 
     void print(Object obj) {
