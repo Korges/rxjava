@@ -192,6 +192,7 @@ public class RxjavaApplicationTests {
         Observable
                 .interval(2, TimeUnit.SECONDS)
                 .flatMap(x -> childrenOf(dir))
+                .distinct()
                 .blockingSubscribe(this::print);
     }
 
