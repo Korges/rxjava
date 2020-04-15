@@ -9,13 +9,17 @@ import com.korges.rxjava.weather.WeatherClient;
 import io.reactivex.Maybe;
 import io.reactivex.Observable;
 import io.reactivex.Single;
+import io.reactivex.observers.TestObserver;
 import io.reactivex.schedulers.Schedulers;
+import io.reactivex.schedulers.TestScheduler;
 import io.reactivex.subjects.Subject;
+import io.reactivex.subscribers.TestSubscriber;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -28,6 +32,7 @@ import java.util.concurrent.TimeUnit;
 public class RxjavaApplicationTests {
 
     private final Logger logger = LoggerFactory.getLogger(RxjavaApplicationTests.class);
+    private static final BigDecimal FALLBACK = BigDecimal.ONE.negate();
 
     /**
      * Observable is a type that represents asynchronous stream of data.
@@ -194,6 +199,43 @@ public class RxjavaApplicationTests {
                 .flatMap(x -> childrenOf(dir))
                 .distinct()
                 .blockingSubscribe(this::print);
+    }
+
+    /**
+     * How to test RxJava code
+     * New operators: .retry(), .doOnError(), .onErrorReturn()...
+     */
+    @Test
+    public void rxJava_13() {
+        final TestScheduler testScheduler = new TestScheduler();
+        final Observable<BigDecimal> response = verySlowSoapService()
+                .timeout(1, TimeUnit.SECONDS, testScheduler)
+                .doOnError(ex -> logger.warn("Oops " + ex)) // never do this (stacktrace wont appear)!
+                .retry(4)
+                .onErrorReturn(x -> FALLBACK);
+
+//        response
+//                .blockingSubscribe(this::print);
+
+        final TestObserver<BigDecimal> observer = new TestObserver<>();
+        response.subscribe(observer);
+
+        observer.assertNoErrors();
+        observer.assertNoValues();
+
+        testScheduler.advanceTimeBy(4_999, TimeUnit.MILLISECONDS);
+        observer.assertNoErrors();
+        observer.assertNoValues();
+
+        testScheduler.advanceTimeBy(1, TimeUnit.MILLISECONDS);
+        observer.assertNoErrors();
+        observer.assertValue(FALLBACK);
+    }
+
+    private Observable<BigDecimal> verySlowSoapService() {
+        return Observable
+                .timer(1, TimeUnit.MINUTES)
+                .map(x -> BigDecimal.ZERO);
     }
 
     void print(Object obj) {
